@@ -35,8 +35,26 @@ def get_db():
         db.close()
 
 @app.get("/")
-def root():
-    return {"message" : "Hello World"}
+def get_parse_sqls(db: Session = Depends(get_db), offset: int = 0, limit: int = 10):
+    # Query with pagination using offset and limit
+    parse_sqls = db.query(models.SqlParsers).offset(offset).limit(limit).all()
+
+    # Convert the SqlParsers objects to a list of dictionaries
+    parse_sqls_list = [
+        {
+            "id": sql_parser.id,
+            "input_query": sql_parser.input_query,
+            "modified_query": sql_parser.modified_query,
+            "hashed_column_map": sql_parser.hashed_column_map,
+        }
+        for sql_parser in parse_sqls
+    ]
+
+    response_data = {
+        "parse_sqls": parse_sqls_list
+    }
+
+    return JSONResponse(content=response_data)
 
 @app.post("/")
 def parse_sql(sql_parser: SqlParser, db: Session = Depends(get_db)):
@@ -65,3 +83,4 @@ def parse_sql(sql_parser: SqlParser, db: Session = Depends(get_db)):
     }
     
     return JSONResponse(content=response_data)
+
