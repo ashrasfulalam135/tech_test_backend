@@ -37,7 +37,7 @@ def get_db():
 @app.get("/")
 def get_parse_sqls(db: Session = Depends(get_db), offset: int = 0, limit: int = 10):
     # Query with pagination using offset and limit
-    parse_sqls = db.query(models.SqlParsers).offset(offset).limit(limit).all()
+    parse_sqls = db.query(models.SqlParsers).order_by(models.SqlParsers.id.desc()).offset(offset).limit(limit).all()
 
     # Convert the SqlParsers objects to a list of dictionaries
     parse_sqls_list = [
