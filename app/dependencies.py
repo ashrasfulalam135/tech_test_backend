@@ -1,6 +1,7 @@
 import sqlparse
 import sqlvalidator
 import hashlib
+import re
 
 def sqlparser(sql_query):
     process = True
@@ -162,11 +163,10 @@ def map_original_hashed_column_name(original_column_name, column_name_mapping):
     column_name_mapping[original_column_name] = hashed_column_name
 
 def modified_query(sql_query, column_name_mapping):
-    # Initialize the modified query with the original SQL query
-    modified_query = sql_query
+    # Generate the dynamic regular expression pattern based on keys in the column_mapping
+    column_pattern = re.compile(r'\b(' + '|'.join(re.escape(key) for key in column_name_mapping.keys()) + r')\b')
 
-    # Replace column names in the SQL query
-    for column_name, hashed_value in column_name_mapping.items():
-        modified_query = modified_query.replace(column_name, hashed_value)
+    # Replace column names with mapped values using regular expressions
+    modified_query = column_pattern.sub(lambda match: column_name_mapping[match.group(0)], sql_query)
 
     return modified_query
