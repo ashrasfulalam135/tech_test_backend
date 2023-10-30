@@ -85,8 +85,10 @@ def parse_statement(statement, column_name_mapping, process_token):
                 map_original_hashed_column_name("*", column_name_mapping)
             elif isinstance(token, sqlparse.sql.Identifier):
                 # This token represents an identifier
-                map_original_hashed_column_name(
-                    token.get_real_name(), column_name_mapping)
+                if token.get_alias():
+                    map_original_hashed_column_name(token.get_alias(), column_name_mapping)
+                else:
+                    map_original_hashed_column_name(token.get_real_name(), column_name_mapping)
             elif isinstance(token, sqlparse.sql.IdentifierList):
                 # This token represents a list of identifiers ( For multiple column selection)
                 for indentifier_list_token in token.tokens:
@@ -98,8 +100,10 @@ def parse_statement(statement, column_name_mapping, process_token):
                                         map_original_hashed_column_name(
                                             identifier_token_inside_function.get_real_name(), column_name_mapping)
                     elif isinstance(indentifier_list_token, sqlparse.sql.Identifier):
-                        map_original_hashed_column_name(
-                            indentifier_list_token.get_real_name(), column_name_mapping)
+                        if indentifier_list_token.get_alias():
+                            map_original_hashed_column_name(indentifier_list_token.get_alias(), column_name_mapping)
+                        else:
+                            map_original_hashed_column_name(indentifier_list_token.get_real_name(), column_name_mapping)
                     elif isinstance(indentifier_list_token, sqlparse.sql.Comparison):
                         # This token represents an Comparisons
                         for comparison_token in indentifier_list_token.tokens:
@@ -122,21 +126,29 @@ def parse_statement(statement, column_name_mapping, process_token):
                                 map_original_hashed_column_name(
                                     "*", column_name_mapping)
                             elif isinstance(identifier_token_inside_function, sqlparse.sql.Identifier):
-                                map_original_hashed_column_name(
-                                    identifier_token_inside_function.get_real_name(), column_name_mapping)
+                                if identifier_token_inside_function.get_alias():
+                                    map_original_hashed_column_name(identifier_token_inside_function.get_alias(), column_name_mapping)
+                                else:
+                                    map_original_hashed_column_name(identifier_token_inside_function.get_real_name(), column_name_mapping)
                             elif isinstance(identifier_token_inside_function, sqlparse.sql.IdentifierList):
                                 for identifier_inside_function in identifier_token_inside_function.get_identifiers():
-                                    map_original_hashed_column_name(
-                                        identifier_inside_function.get_real_name(), column_name_mapping)
+                                    if identifier_inside_function.get_alias():
+                                        map_original_hashed_column_name(identifier_inside_function.get_alias(), column_name_mapping)
+                                    else:
+                                        map_original_hashed_column_name(identifier_inside_function.get_real_name(), column_name_mapping)
             elif isinstance(token, sqlparse.sql.Parenthesis):
                 for parenthesis_token in token.tokens:
                     if isinstance(parenthesis_token, sqlparse.sql.Identifier):
-                        map_original_hashed_column_name(
-                            parenthesis_token.get_real_name(), column_name_mapping)
+                        if parenthesis_token.get_alias():
+                            map_original_hashed_column_name(parenthesis_token.get_alias(), column_name_mapping)
+                        else:
+                            map_original_hashed_column_name(parenthesis_token.get_real_name(), column_name_mapping)
                     elif isinstance(parenthesis_token, sqlparse.sql.IdentifierList):
                         for identifier_parenthesis in parenthesis_token.get_identifiers():
-                            map_original_hashed_column_name(
-                                identifier_parenthesis.get_real_name(), column_name_mapping)
+                            if identifier_parenthesis.get_alias():
+                                map_original_hashed_column_name(identifier_parenthesis.get_alias(), column_name_mapping)
+                            else:
+                                map_original_hashed_column_name(identifier_parenthesis.get_real_name(), column_name_mapping)
             elif isinstance(token, sqlparse.sql.Where):
                 for where_token in token.tokens:
                     if isinstance(where_token, sqlparse.sql.Comparison):
@@ -153,7 +165,9 @@ def parse_statement(statement, column_name_mapping, process_token):
                         # This will check nested query and rerun to find the columns.
                         nested_query = where_token.value.replace(
                             "(", "").replace(")", "")
-                        hash_column_names(nested_query)
+                        # hash_column_names(nested_query)
+                        nested_mapping = hash_column_names(nested_query)
+                        column_name_mapping.update(nested_mapping)
 
 def map_original_hashed_column_name(original_column_name, column_name_mapping):
     # Hash the original column name
